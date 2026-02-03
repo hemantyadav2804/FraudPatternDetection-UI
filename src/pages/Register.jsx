@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { registerUser } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
@@ -13,13 +13,7 @@ const Register = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        "http://localhost:8090/auth/register",
-        {
-          username,
-          password,
-        }
-      );
+      const response = await registerUser({ username, password });
 
       setMessage(response.data);
 

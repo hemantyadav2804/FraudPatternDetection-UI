@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { loginUser } from "../services/api";
 import ForgotPassword from "./ForgotPassword";
 
 const Login = () => {
@@ -11,10 +11,7 @@ const Login = () => {
   const login = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:8090/auth/login",
-        { username, password }
-      );
+      const res = await loginUser({ username, password });
       setMessage(res.data);
     } catch {
       setMessage("Login failed");
