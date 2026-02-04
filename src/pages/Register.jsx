@@ -1,69 +1,64 @@
-import { useState } from "react";
-import { registerUser } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import axios from "axios";
+import { Link } from "react-router-dom";
 
 const Register = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const navigate = useNavigate();
-
-  const handleRegister = async (e) => {
+  const register = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await registerUser({ username, password });
-
-      setMessage(response.data);
-
-      // redirect after successful registration
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
-
-    } catch (error) {
-      if (error.response) {
-        setMessage(error.response.data);
-      } else {
-        setMessage("Server not reachable");
-      }
+      const res = await axios.post(
+        "http://localhost:8090/auth/register",
+        { username, password }
+      );
+      setMessage(res.data);
+    } catch {
+      setMessage("Registration failed");
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2>User Registration</h2>
+    <div className="container mt-5 col-md-4">
+      <div className="card">
+        <div className="card-body">
 
-      <form onSubmit={handleRegister}>
-        <div className="mb-3">
-          <label className="form-label">Username</label>
-          <input
-            type="text"
-            className="form-control"
-            required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+          <h3 className="text-center mb-3">Register</h3>
+
+          <form onSubmit={register}>
+            <input
+              className="form-control mb-2"
+              placeholder="Username"
+              onChange={(e) => setUsername(e.target.value)}
+            />
+
+            <input
+              type="password"
+              className="form-control mb-3"
+              placeholder="Password"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <button className="btn btn-success w-100">
+              Register
+            </button>
+          </form>
+
+          <div className="text-center mt-3">
+            <Link to="/login">Back to Login</Link>
+          </div>
+
+          {message && (
+            <div className="alert alert-info mt-3 text-center">
+              {message}
+            </div>
+          )}
+
         </div>
-
-        <div className="mb-3">
-          <label className="form-label">Password</label>
-          <input
-            type="password"
-            className="form-control"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-
-        <button type="submit" className="btn btn-primary">
-          Register
-        </button>
-      </form>
-
-      {message && <p className="mt-3">{message}</p>}
+      </div>
     </div>
   );
 };

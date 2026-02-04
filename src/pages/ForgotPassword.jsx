@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 const ForgotPassword = () => {
   const [username, setUsername] = useState("");
@@ -17,8 +18,8 @@ const ForgotPassword = () => {
       );
       setMessage(res.data);
       setStep(2);
-    } catch (err) {
-      setMessage("Error generating OTP");
+    } catch {
+      setMessage("Failed to generate OTP");
     }
   };
 
@@ -30,8 +31,8 @@ const ForgotPassword = () => {
         { params: { username, otp, newPassword } }
       );
       setMessage(res.data);
-    } catch (err) {
-      setMessage("Error resetting password");
+    } catch {
+      setMessage("Failed to reset password");
     }
   };
 
@@ -40,7 +41,7 @@ const ForgotPassword = () => {
       <div className="card">
         <div className="card-body">
 
-          <h4 className="text-center mb-3">Forgot Password</h4>
+          <h3 className="text-center mb-3">Forgot Password</h3>
 
           {step === 1 && (
             <>
@@ -73,6 +74,10 @@ const ForgotPassword = () => {
               </button>
             </>
           )}
+
+          <div className="text-center mt-3">
+            <Link to="/login">Back to Login</Link>
+          </div>
 
           {message && (
             <div className="alert alert-info mt-3 text-center">
