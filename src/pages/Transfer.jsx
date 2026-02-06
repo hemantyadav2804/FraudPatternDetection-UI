@@ -2,8 +2,8 @@ import { useState } from "react";
 import { transferMoney } from "../services/api";
 
 const Transfer = () => {
-  const [fromAccountId, setFromAccountId] = useState("");
-  const [toAccountId, setToAccountId] = useState("");
+  const [fromUserId, setFromAccountId] = useState("");
+  const [toUserId, setToAccountId] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
 
@@ -12,8 +12,8 @@ const handleTransfer = async (e) => {
 
   try {
     const response = await transferMoney({
-      fromAccountId: Number(fromAccountId),
-      toAccountId: Number(toAccountId),
+      fromUserId: Number(fromUserId),
+      toUserId: Number(toUserId),
       amount: Number(amount),
     });
 
@@ -47,7 +47,7 @@ const handleTransfer = async (e) => {
             type="number"
             className="form-control"
             required
-            value={fromAccountId}
+            value={fromUserId}
             onChange={(e) => setFromAccountId(e.target.value)}
           />
         </div>
@@ -58,7 +58,7 @@ const handleTransfer = async (e) => {
             type="number"
             className="form-control"
             required
-            value={toAccountId}
+            value={toUserId}
             onChange={(e) => setToAccountId(e.target.value)}
           />
         </div>
