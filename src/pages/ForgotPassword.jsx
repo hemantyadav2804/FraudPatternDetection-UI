@@ -1,94 +1,66 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import API from "../services/api";
 
-const ForgotPassword = () => {
+export default function ForgotPassword() {
   const [username, setUsername] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [step, setStep] = useState(1);
   const [message, setMessage] = useState("");
 
   const generateOtp = async () => {
     try {
-      const res = await axios.post(
-        "http://localhost:8090/auth/forgot-password",
-        null,
-        { params: { username } }
-      );
+      const res = await API.post(`/auth/forgot-password?username=${username}`);
       setMessage(res.data);
-      setStep(2);
-    } catch {
-      setMessage("Failed to generate OTP");
+    } catch (err) {
+      setMessage("Error generating OTP");
     }
   };
 
   const resetPassword = async () => {
     try {
-      const res = await axios.post(
-        "http://localhost:8090/auth/reset-password",
-        null,
-        { params: { username, otp, newPassword } }
+      const res = await API.post(
+        `/auth/reset-password?username=${username}&otp=${otp}&newPassword=${newPassword}`
       );
       setMessage(res.data);
-    } catch {
-      setMessage("Failed to reset password");
+    } catch (err) {
+      setMessage("Error resetting password");
     }
   };
 
   return (
-    <div className="container mt-5 col-md-4">
-      <div className="card">
-        <div className="card-body">
+    <div className="container vh-100 d-flex justify-content-center align-items-center">
+      <div className="card shadow p-4" style={{ width: "400px" }}>
+        <h4 className="text-center mb-3">Forgot Password</h4>
 
-          <h3 className="text-center mb-3">Forgot Password</h3>
+        <input
+          className="form-control mb-2"
+          placeholder="Username"
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
-          {step === 1 && (
-            <>
-              <input
-                className="form-control mb-3"
-                placeholder="Username"
-                onChange={(e) => setUsername(e.target.value)}
-              />
-              <button className="btn btn-primary w-100" onClick={generateOtp}>
-                Generate OTP
-              </button>
-            </>
-          )}
+        <button className="btn btn-warning w-100 mb-3" onClick={generateOtp}>
+          Generate OTP
+        </button>
 
-          {step === 2 && (
-            <>
-              <input
-                className="form-control mb-2"
-                placeholder="OTP"
-                onChange={(e) => setOtp(e.target.value)}
-              />
-              <input
-                type="password"
-                className="form-control mb-3"
-                placeholder="New Password"
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-              <button className="btn btn-success w-100" onClick={resetPassword}>
-                Reset Password
-              </button>
-            </>
-          )}
+        <input
+          className="form-control mb-2"
+          placeholder="OTP"
+          onChange={(e) => setOtp(e.target.value)}
+        />
 
-          <div className="text-center mt-3">
-            <Link to="/login">Back to Login</Link>
-          </div>
+        <input
+          className="form-control mb-3"
+          type="password"
+          placeholder="New Password"
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
 
-          {message && (
-            <div className="alert alert-info mt-3 text-center">
-              {message}
-            </div>
-          )}
+        <button className="btn btn-success w-100" onClick={resetPassword}>
+          Reset Password
+        </button>
 
-        </div>
+        {message && <div className="alert alert-info mt-3">{message}</div>}
       </div>
     </div>
   );
-};
-
-export default ForgotPassword;
+}
