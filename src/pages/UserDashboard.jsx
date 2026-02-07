@@ -8,6 +8,7 @@ import TransactionRow from "../components/TransactionRow";
 export default function UserDashboard() {
 
   const userId = Number(localStorage.getItem("userId"));
+  const username = localStorage.getItem("username");
 
   const [balance, setBalance] = useState(0);
   const [riskScore, setRiskScore] = useState(0);
@@ -85,24 +86,33 @@ export default function UserDashboard() {
   // TRANSFER MONEY
   // ===============================
   const transfer = async () => {
-    try {
-      const res = await API.post("/transaction/transfer", {
-        fromUserId: userId,
-        toUserId: Number(toUserId),
-        amount: Number(transferAmount),
-      });
 
-      setMessage(res.data.message);
+  if (transferAmount <= 0) {
+    setMessage("Transfer amount must be greater than 0");
+    return;
+  }
+
+  try {
+    const res = await API.post("/transaction/transfer", {
+      fromUserId: userId,
+      toUserId: Number(toUserId),
+      amount: Number(transferAmount),
+    });
+
+    setMessage(res.data.message);
+
+    if (res.data.status === "SUCCESS") {
       setToUserId("");
       setTransferAmount("");
-
       loadBalance();
       loadRiskStatus();
       loadTransactions();
-    } catch {
-      setMessage("Transfer failed");
     }
-  };
+
+  } catch {
+    setMessage("Transfer failed");
+  }
+};
 
   // ===============================
   // UI
@@ -113,7 +123,7 @@ export default function UserDashboard() {
 
       <div className="container mt-4">
 
-        <h4 className="mb-3">Welcome Back</h4>
+        <h4 className="mb-3">Welcome, {username}</h4>
 
         {/* METRIC CARDS */}
         <div className="row g-3">

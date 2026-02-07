@@ -13,7 +13,8 @@ export default function Login() {
   if (res.data.userId) {
     localStorage.setItem("userId", res.data.userId);
     localStorage.setItem("role", res.data.role);
-
+    localStorage.setItem("username", res.data.username);
+    
     res.data.role === "ADMIN"
       ? navigate("/admin")
       : navigate("/user");
