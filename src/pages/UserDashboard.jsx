@@ -27,7 +27,7 @@ export default function UserDashboard() {
       return;
     }
 
-    loadBalance();
+    loadAccount();
     loadRiskStatus();
     loadTransactions();
   }, [userId]);
@@ -78,7 +78,7 @@ export default function UserDashboard() {
       );
       setMessage("Deposit successful");
       setDepositAmount("");
-      loadBalance();
+      loadAccount();
     } catch {
       setMessage("Deposit failed");
     }
@@ -106,7 +106,7 @@ export default function UserDashboard() {
     if (res.data.status === "SUCCESS") {
       setToUserId("");
       setTransferAmount("");
-      loadBalance();
+      loadAccount();
       loadRiskStatus();
       loadTransactions();
     }
