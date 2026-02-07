@@ -8,9 +8,20 @@ export default function Login() {
   const navigate = useNavigate();
 
   const login = async () => {
-    const res = await API.post("/auth/login", { username, password });
-    res.data.role === "ADMIN" ? navigate("/admin") : navigate("/user");
-  };
+  const res = await API.post("/auth/login", { username, password });
+
+  if (res.data.userId) {
+    localStorage.setItem("userId", res.data.userId);
+    localStorage.setItem("role", res.data.role);
+
+    res.data.role === "ADMIN"
+      ? navigate("/admin")
+      : navigate("/user");
+  } else {
+    alert(res.data.message);
+  }
+};
+
 
   return (
     <div className="container-fluid vh-100 d-flex">

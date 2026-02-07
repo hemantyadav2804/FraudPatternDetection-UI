@@ -7,28 +7,30 @@ import TransactionRow from "../components/TransactionRow";
 
 export default function UserDashboard() {
 
-  // ⚠️ DEMO PURPOSE – later replace with logged-in user
-  const userId = 1;
+  const userId = Number(localStorage.getItem("userId"));
 
   const [balance, setBalance] = useState(0);
   const [riskScore, setRiskScore] = useState(0);
   const [status, setStatus] = useState("ACTIVE");
   const [transactions, setTransactions] = useState([]);
+  const [message, setMessage] = useState("");
 
   const [depositAmount, setDepositAmount] = useState("");
   const [toUserId, setToUserId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
 
-  const [message, setMessage] = useState("");
 
-  // ===============================
-  // LOAD USER DATA
-  // ===============================
   useEffect(() => {
+    if (!userId) {
+      setMessage("User not logged in");
+      return;
+    }
+
     loadBalance();
     loadRiskStatus();
     loadTransactions();
-  }, []);
+  }, [userId]);
+
 
   const loadBalance = async () => {
     try {

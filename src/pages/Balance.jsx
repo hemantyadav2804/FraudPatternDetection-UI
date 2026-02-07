@@ -3,7 +3,7 @@ import axios from "axios";
 
 const Balance = () => {
   const [balance, setBalance] = useState(null);
-  const userId = localStorage.getItem("userId");
+  const userId = Number(localStorage.getItem("userId"));
 
   const fetchBalance = async () => {
     try {
