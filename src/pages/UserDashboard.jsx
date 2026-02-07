@@ -10,6 +10,7 @@ export default function UserDashboard() {
   const userId = Number(localStorage.getItem("userId"));
   const username = localStorage.getItem("username");
 
+  const [dailyLimit, setDailyLimit] = useState(0);
   const [balance, setBalance] = useState(0);
   const [riskScore, setRiskScore] = useState(0);
   const [status, setStatus] = useState("ACTIVE");
@@ -19,7 +20,6 @@ export default function UserDashboard() {
   const [depositAmount, setDepositAmount] = useState("");
   const [toUserId, setToUserId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
-
 
   useEffect(() => {
     if (!userId) {
@@ -33,14 +33,16 @@ export default function UserDashboard() {
   }, [userId]);
 
 
-  const loadBalance = async () => {
-    try {
-      const res = await API.get(`/account/balance/${userId}`);
-      setBalance(res.data);
-    } catch {
-      setMessage("Error loading balance");
-    }
-  };
+  const loadAccount = async () => {
+  try {
+    const res = await API.get(`/account/details/${userId}`);
+    setBalance(res.data.balance);
+    setDailyLimit(res.data.dailyLimit);
+  } catch {
+    setMessage("Error loading account details");
+  }
+};
+
 
   const loadRiskStatus = async () => {
     try {
@@ -112,6 +114,18 @@ export default function UserDashboard() {
   } catch {
     setMessage("Transfer failed");
   }
+  };
+  
+  const isTransferInvalid = () => {
+  if (!toUserId) return true;
+
+  const amt = Number(transferAmount);
+
+  if (!amt || amt <= 0) return true;
+  if (amt > balance) return true;
+  if (amt > dailyLimit) return true;
+
+  return false;
 };
 
   // ===============================
@@ -128,6 +142,7 @@ export default function UserDashboard() {
         {/* METRIC CARDS */}
         <div className="row g-3">
           <MetricCard title="Balance" value={`₹ ${balance}`} />
+          <MetricCard title="Daily Limit" value={`₹ ${dailyLimit}`} />
           <MetricCard title="Risk Score" value={<RiskBadge score={riskScore} />} />
           <MetricCard title="Account Status" value={status} />
         </div>
@@ -175,9 +190,14 @@ export default function UserDashboard() {
                 value={transferAmount}
                 onChange={(e) => setTransferAmount(e.target.value)}
               />
-              <button className="btn btn-primary w-100" onClick={transfer}>
+              <button
+                className="btn btn-primary w-100"
+                onClick={transfer}
+                disabled={isTransferInvalid()}
+              >
                 Transfer
               </button>
+
             </div>
           </div>
         </div>
