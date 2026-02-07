@@ -1,53 +1,207 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import Balance from "./Balance";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import API from "../services/api";
+import Navbar from "../components/NavBar";
+import MetricCard from "../components/MetricCard";
+import RiskBadge from "../components/RiskBadge";
+import TransactionRow from "../components/TransactionRow";
 
-const UserDashboard = () => {
-  const navigate = useNavigate();
+export default function UserDashboard() {
 
-  // ✅ Day 8: fraud risk score state
+  // ⚠️ DEMO PURPOSE – later replace with logged-in user
+  const userId = 1;
+
+  const [balance, setBalance] = useState(0);
   const [riskScore, setRiskScore] = useState(0);
+  const [status, setStatus] = useState("ACTIVE");
+  const [transactions, setTransactions] = useState([]);
 
-  // ✅ Fetch risk score when dashboard loads
+  const [depositAmount, setDepositAmount] = useState("");
+  const [toUserId, setToUserId] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+
+  const [message, setMessage] = useState("");
+
+  // ===============================
+  // LOAD USER DATA
+  // ===============================
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
-
-    if (userId) {
-      axios
-        .get(`http://localhost:8090/fraud/risk-score/${userId}`)
-        .then((res) => {
-          setRiskScore(res.data);
-        })
-        .catch(() => {
-          console.log("Failed to fetch risk score");
-        });
-    }
+    loadBalance();
+    loadRiskStatus();
+    loadTransactions();
   }, []);
 
-  const logout = () => {
-    localStorage.clear();
-    navigate("/login");
+  const loadBalance = async () => {
+    try {
+      const res = await API.get(`/account/balance/${userId}`);
+      setBalance(res.data);
+    } catch {
+      setMessage("Error loading balance");
+    }
   };
 
+  const loadRiskStatus = async () => {
+    try {
+      // Admin API reused to get user info
+      const res = await API.get(`/admin/users?adminId=1`);
+      const user = res.data.find(u => u.id === userId);
+
+      if (user) {
+        setRiskScore(user.riskScore);
+        setStatus(user.status);
+      }
+    } catch {
+      setMessage("Error loading risk score");
+    }
+  };
+
+  const loadTransactions = async () => {
+    try {
+      const res = await API.get(`/transaction/user/${userId}`);
+      setTransactions(res.data);
+    } catch {
+      setMessage("Error loading transactions");
+    }
+  };
+
+  // ===============================
+  // DEPOSIT MONEY
+  // ===============================
+  const deposit = async () => {
+    try {
+      await API.post(
+        `/account/deposit?userId=${userId}&amount=${depositAmount}`
+      );
+      setMessage("Deposit successful");
+      setDepositAmount("");
+      loadBalance();
+    } catch {
+      setMessage("Deposit failed");
+    }
+  };
+
+  // ===============================
+  // TRANSFER MONEY
+  // ===============================
+  const transfer = async () => {
+    try {
+      const res = await API.post("/transaction/transfer", {
+        fromUserId: userId,
+        toUserId: Number(toUserId),
+        amount: Number(transferAmount),
+      });
+
+      setMessage(res.data.message);
+      setToUserId("");
+      setTransferAmount("");
+
+      loadBalance();
+      loadRiskStatus();
+      loadTransactions();
+    } catch {
+      setMessage("Transfer failed");
+    }
+  };
+
+  // ===============================
+  // UI
+  // ===============================
   return (
-    <div className="container mt-5 text-center">
-      <h3>User Dashboard</h3>
+    <>
+      <Navbar title="SecureBank Pro - User Dashboard" />
 
-      {/* ✅ Fraud Warning Banner (Day 8) */}
-      {riskScore >= 30 && (
-        <div className="alert alert-warning mt-3">
-          ⚠️ Suspicious activity detected on your account
+      <div className="container mt-4">
+
+        <h4 className="mb-3">Welcome Back</h4>
+
+        {/* METRIC CARDS */}
+        <div className="row g-3">
+          <MetricCard title="Balance" value={`₹ ${balance}`} />
+          <MetricCard title="Risk Score" value={<RiskBadge score={riskScore} />} />
+          <MetricCard title="Account Status" value={status} />
         </div>
-      )}
 
-      <Balance />
+        {/* MESSAGE */}
+        {message && (
+          <div className="alert alert-info mt-3">{message}</div>
+        )}
 
-      <button className="btn btn-danger mt-3" onClick={logout}>
-        Logout
-      </button>
-    </div>
+        {/* ACTIONS */}
+        <div className="row mt-4">
+          
+          {/* DEPOSIT */}
+          <div className="col-md-6">
+            <div className="card shadow p-3">
+              <h6>Deposit Money</h6>
+              <input
+                className="form-control mb-2"
+                type="number"
+                placeholder="Amount"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+              />
+              <button className="btn btn-success w-100" onClick={deposit}>
+                Deposit
+              </button>
+            </div>
+          </div>
+
+          {/* TRANSFER */}
+          <div className="col-md-6">
+            <div className="card shadow p-3">
+              <h6>Transfer Money</h6>
+              <input
+                className="form-control mb-2"
+                type="number"
+                placeholder="To User ID"
+                value={toUserId}
+                onChange={(e) => setToUserId(e.target.value)}
+              />
+              <input
+                className="form-control mb-2"
+                type="number"
+                placeholder="Amount"
+                value={transferAmount}
+                onChange={(e) => setTransferAmount(e.target.value)}
+              />
+              <button className="btn btn-primary w-100" onClick={transfer}>
+                Transfer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* TRANSACTION HISTORY */}
+        <div className="card shadow p-3 mt-5">
+          <h5>Recent Transactions</h5>
+
+          <table className="table table-striped mt-2">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Amount</th>
+                <th>Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center">
+                    No transactions found
+                  </td>
+                </tr>
+              ) : (
+                transactions.map(tx => (
+                  <TransactionRow key={tx.id} tx={tx} />
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </>
   );
-};
-
-export default UserDashboard;
+}
