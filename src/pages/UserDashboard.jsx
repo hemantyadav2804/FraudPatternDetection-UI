@@ -13,10 +13,13 @@ export default function UserDashboard() {
   const userId = Number(localStorage.getItem("userId"));
   const username = localStorage.getItem("username");
 
-  const [dailyLimit, setDailyLimit] = useState(0);
   const [balance, setBalance] = useState(0);
+  const [dailyLimit, setDailyLimit] = useState(0);
+  const [remainingDailyLimit, setRemainingDailyLimit] = useState(0);
+
   const [riskScore, setRiskScore] = useState(0);
   const [status, setStatus] = useState("ACTIVE");
+
   const [transactions, setTransactions] = useState([]);
   const [message, setMessage] = useState("");
 
@@ -24,35 +27,35 @@ export default function UserDashboard() {
   const [toUserId, setToUserId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
 
+  // ===============================
+  // LOAD DATA
+  // ===============================
   useEffect(() => {
-  if (!userId) {
-    navigate("/");
-    return;
-  }
+    if (!userId) {
+      navigate("/");
+      return;
+    }
 
-  loadAccount();
-  loadRiskStatus();
-  loadTransactions();
-}, [userId]);
+    loadAccountSummary();
+    loadRiskStatus();
+    loadTransactions();
+  }, [userId]);
 
-
-  const loadAccount = async () => {
-  try {
-    const res = await API.get(`/account/details/${userId}`);
-    setBalance(res.data.balance);
-    setDailyLimit(res.data.dailyLimit);
-  } catch {
-    setMessage("Error loading account details");
-  }
-};
-
+  const loadAccountSummary = async () => {
+    try {
+      const res = await API.get(`/account/summary/${userId}`);
+      setBalance(res.data.balance);
+      setDailyLimit(res.data.dailyLimit);
+      setRemainingDailyLimit(res.data.remainingDailyLimit);
+    } catch {
+      setMessage("Error loading account summary");
+    }
+  };
 
   const loadRiskStatus = async () => {
     try {
-      // Admin API reused to get user info
       const res = await API.get(`/admin/users?adminId=1`);
       const user = res.data.find(u => u.id === userId);
-
       if (user) {
         setRiskScore(user.riskScore);
         setStatus(user.status);
@@ -75,70 +78,61 @@ export default function UserDashboard() {
   // DEPOSIT MONEY
   // ===============================
   const deposit = async () => {
+    if (depositAmount <= 0) {
+      setMessage("Deposit amount must be greater than 0");
+      return;
+    }
 
-  if (depositAmount <= 0) {
-    setMessage("Deposit amount must be greater than 0");
-    return;
-  }
-
-  try {
-    const res = await API.post(
-      `/account/deposit?userId=${userId}&amount=${depositAmount}`
-    );
-
-    setMessage(res.data);
-    setDepositAmount("");
-    loadAccount();
-
-  } catch {
-    setMessage("Deposit failed");
-  }
-};
-
+    try {
+      const res = await API.post(
+        `/account/deposit?userId=${userId}&amount=${depositAmount}`
+      );
+      setMessage(res.data);
+      setDepositAmount("");
+      loadAccountSummary();
+    } catch {
+      setMessage("Deposit failed");
+    }
+  };
 
   // ===============================
   // TRANSFER MONEY
   // ===============================
   const transfer = async () => {
-
-  if (transferAmount <= 0) {
-    setMessage("Transfer amount must be greater than 0");
-    return;
-  }
-
-  try {
-    const res = await API.post("/transaction/transfer", {
-      fromUserId: userId,
-      toUserId: Number(toUserId),
-      amount: Number(transferAmount),
-    });
-
-    setMessage(res.data.message);
-
-    if (res.data.status === "SUCCESS") {
-      setToUserId("");
-      setTransferAmount("");
-      loadAccount();
-      loadRiskStatus();
-      loadTransactions();
+    if (transferAmount <= 0) {
+      setMessage("Transfer amount must be greater than 0");
+      return;
     }
 
-  } catch {
-    setMessage("Transfer failed");
-  }
+    try {
+      const res = await API.post("/transaction/transfer", {
+        fromUserId: userId,
+        toUserId: Number(toUserId),
+        amount: Number(transferAmount),
+      });
+
+      setMessage(res.data.message);
+
+      if (res.data.status === "SUCCESS") {
+        setToUserId("");
+        setTransferAmount("");
+        loadAccountSummary();
+        loadRiskStatus();
+        loadTransactions();
+      }
+    } catch {
+      setMessage("Transfer failed");
+    }
   };
-  
+
   const isTransferInvalid = () => {
-  if (!toUserId) return true;
-
-  const amt = Number(transferAmount);
-
-  if (!amt || amt <= 0) return true;
-  if (amt > balance) return true;
-  if (amt > dailyLimit) return true;
-
-  return false;
-};
+    const amt = Number(transferAmount);
+    if (!toUserId) return true;
+    if (!amt || amt <= 0) return true;
+    if (amt > balance) return true;
+    if (amt > remainingDailyLimit) return true;
+    return false;
+  };
 
   // ===============================
   // UI
@@ -153,20 +147,19 @@ export default function UserDashboard() {
 
         {/* METRIC CARDS */}
         <div className="row g-3">
-          <MetricCard title="Balance" value={`₹ ${balance}`} />
-          <MetricCard title="Daily Limit" value={`₹ ${dailyLimit}`} />
-          <MetricCard title="Risk Score" value={<RiskBadge score={riskScore} />} />
-          <MetricCard title="Account Status" value={status} />
+            <MetricCard title="Balance" value={`₹ ${balance}`} />
+            <MetricCard title="Daily Limit" value={`₹ ${dailyLimit}`} />
+            <MetricCard title="Remaining Limit" value={`₹ ${remainingDailyLimit}`}/>
+            <MetricCard title="Risk Score" value={<RiskBadge score={riskScore} />}/>
         </div>
 
-        {/* MESSAGE */}
         {message && (
           <div className="alert alert-info mt-3">{message}</div>
         )}
 
         {/* ACTIONS */}
         <div className="row mt-4">
-          
+
           {/* DEPOSIT */}
           <div className="col-md-6">
             <div className="card shadow p-3">
@@ -209,7 +202,6 @@ export default function UserDashboard() {
               >
                 Transfer
               </button>
-
             </div>
           </div>
         </div>

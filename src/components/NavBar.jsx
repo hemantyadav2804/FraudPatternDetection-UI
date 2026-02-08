@@ -4,6 +4,7 @@ export default function Navbar({ title }) {
   const navigate = useNavigate();
 
   const logout = () => {
+    localStorage.clear();
     navigate("/");
   };
 
