@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/NavBar";
 import MetricCard from "../components/MetricCard";
@@ -6,6 +7,8 @@ import RiskBadge from "../components/RiskBadge";
 import TransactionRow from "../components/TransactionRow";
 
 export default function UserDashboard() {
+
+  const navigate = useNavigate();
 
   const userId = Number(localStorage.getItem("userId"));
   const username = localStorage.getItem("username");
@@ -22,15 +25,15 @@ export default function UserDashboard() {
   const [transferAmount, setTransferAmount] = useState("");
 
   useEffect(() => {
-    if (!userId) {
-      setMessage("User not logged in");
-      return;
-    }
+  if (!userId) {
+    navigate("/");
+    return;
+  }
 
-    loadAccount();
-    loadRiskStatus();
-    loadTransactions();
-  }, [userId]);
+  loadAccount();
+  loadRiskStatus();
+  loadTransactions();
+}, [userId]);
 
 
   const loadAccount = async () => {
@@ -72,17 +75,26 @@ export default function UserDashboard() {
   // DEPOSIT MONEY
   // ===============================
   const deposit = async () => {
-    try {
-      await API.post(
-        `/account/deposit?userId=${userId}&amount=${depositAmount}`
-      );
-      setMessage("Deposit successful");
-      setDepositAmount("");
-      loadAccount();
-    } catch {
-      setMessage("Deposit failed");
-    }
-  };
+
+  if (depositAmount <= 0) {
+    setMessage("Deposit amount must be greater than 0");
+    return;
+  }
+
+  try {
+    const res = await API.post(
+      `/account/deposit?userId=${userId}&amount=${depositAmount}`
+    );
+
+    setMessage(res.data);
+    setDepositAmount("");
+    loadAccount();
+
+  } catch {
+    setMessage("Deposit failed");
+  }
+};
+
 
   // ===============================
   // TRANSFER MONEY
@@ -218,7 +230,7 @@ export default function UserDashboard() {
               </tr>
             </thead>
             <tbody>
-              {transactions.length === 0 ? (
+              {!transactions || transactions.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="text-center">
                     No transactions found
