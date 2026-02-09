@@ -41,6 +41,15 @@ export default function UserDashboard() {
     loadTransactions();
   }, [userId]);
 
+  useEffect(() => {
+  const interval = setInterval(() => {
+    loadAccountSummary();
+  }, 60000); // refresh every 1 minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+
   const loadAccountSummary = async () => {
     try {
       const res = await API.get(`/account/summary/${userId}`);

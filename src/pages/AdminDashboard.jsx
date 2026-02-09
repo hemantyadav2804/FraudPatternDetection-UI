@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
-import Navbar from "../components/NavBar";   
+import Navbar from "../components/NavBar";
 import RiskBadge from "../components/RiskBadge";
 import AdminStats from "../components/AdminStats";
 
@@ -23,7 +23,7 @@ export default function AdminDashboard() {
     try {
       const res = await API.get(`/admin/users?adminId=${adminId}`);
       setUsers(res.data);
-    } catch (err) {
+    } catch {
       setMessage("Error loading users");
     }
   };
@@ -36,21 +36,34 @@ export default function AdminDashboard() {
       await API.post(`/admin/block/${userId}?adminId=${adminId}`);
       setMessage("User blocked successfully");
       loadUsers();
-    } catch (err) {
+    } catch {
       setMessage("Failed to block user");
     }
   };
 
   // ===============================
-  // UNBLOCK USER (RESET RISK)
+  // UNBLOCK USER (NO RISK RESET)
   // ===============================
   const unblockUser = async (userId) => {
     try {
       await API.post(`/admin/unblock/${userId}?adminId=${adminId}`);
-      setMessage("User unblocked successfully (Risk score reset)");
+      setMessage("User unblocked successfully");
       loadUsers();
-    } catch (err) {
+    } catch {
       setMessage("Failed to unblock user");
+    }
+  };
+
+  // ===============================
+  // RESET RISK SCORE (ADMIN ONLY)
+  // ===============================
+  const resetRisk = async (userId) => {
+    try {
+      await API.post(`/admin/reset-risk/${userId}?adminId=${adminId}`);
+      setMessage("Risk score reset successfully");
+      loadUsers();
+    } catch {
+      setMessage("Failed to reset risk score");
     }
   };
 
@@ -87,7 +100,7 @@ export default function AdminDashboard() {
                 <th>Role</th>
                 <th>Risk Score</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th>Actions</th>
               </tr>
             </thead>
 
@@ -108,7 +121,9 @@ export default function AdminDashboard() {
                       <RiskBadge score={user.riskScore} />
                     </td>
                     <td>{user.status}</td>
-                    <td>
+
+                    <td className="d-flex gap-2">
+                      {/* BLOCK / UNBLOCK */}
                       {user.status === "ACTIVE" ? (
                         <button
                           className="btn btn-danger btn-sm"
@@ -124,7 +139,17 @@ export default function AdminDashboard() {
                           Unblock
                         </button>
                       )}
+
+                      {/* RESET RISK */}
+                      <button
+                        className="btn btn-warning btn-sm"
+                        disabled={user.riskScore === 0}
+                        onClick={() => resetRisk(user.id)}
+                      >
+                        Reset Risk
+                      </button>
                     </td>
+
                   </tr>
                 ))
               )}
