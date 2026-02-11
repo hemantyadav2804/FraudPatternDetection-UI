@@ -6,7 +6,7 @@ import AdminStats from "../components/AdminStats";
 
 export default function AdminDashboard() {
 
-  // ⚠️ Demo admin (replace later with logged-in admin)
+  // Demo admin 
   const adminId = 1;
 
   const [users, setUsers] = useState([]);
